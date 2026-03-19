@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { setCurrentBlueprint } from '../features/blueprints/blueprintsSlice.js'
 import {
   fetchAuthors,
   fetchByAuthor,
@@ -30,6 +31,7 @@ export default function BlueprintsPage() {
   }
 
   const openBlueprint = (bp) => {
+    dispatch(setCurrentBlueprint(bp))
     dispatch(fetchBlueprint({ author: bp.author, name: bp.name }))
   }
 

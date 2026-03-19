@@ -1,21 +1,28 @@
 export default function BlueprintList({ items = [], onSelect }) {
   if (!items.length) return <p>No hay blueprints para este autor.</p>
+
   return (
-    <div className="grid">
+    <table className="table">
+      <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Puntos</th>
+        <th>Acción</th>
+      </tr>
+      </thead>
+      <tbody>
       {items.map((bp) => (
-        <div key={bp.name} className="card">
-          <h3 style={{ marginTop: 0 }}>{bp.name}</h3>
-          <p>
-            <strong>Autor:</strong> {bp.author}
-          </p>
-          <p>
-            <strong>Puntos:</strong> {bp.points ? bp.points.length : 0}
-          </p>
-          <button className="btn primary" onClick={() => onSelect(bp)}>
-            Ver detalle
-          </button>
-        </div>
+        <tr key={bp.name}>
+          <td>{bp.name}</td>
+          <td>{bp.points ? bp.points.length : 0}</td>
+          <td>
+            <button className="btn primary" onClick={() => onSelect(bp)}>
+              Open
+            </button>
+          </td>
+        </tr>
       ))}
-    </div>
+      </tbody>
+    </table>
   )
 }
