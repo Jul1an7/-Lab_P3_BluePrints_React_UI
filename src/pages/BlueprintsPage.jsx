@@ -7,6 +7,8 @@ import {
   fetchBlueprint,
 } from '../features/blueprints/blueprintsSlice.js'
 import BlueprintCanvas from '../components/BlueprintCanvas.jsx'
+import BlueprintForm from '../components/BlueprintForm.jsx'
+import { createBlueprint } from '../features/blueprints/blueprintsSlice.js'
 
 export default function BlueprintsPage() {
   const dispatch = useDispatch()
@@ -35,9 +37,18 @@ export default function BlueprintsPage() {
     dispatch(fetchBlueprint({ author: bp.author, name: bp.name }))
   }
 
+  const handleCreate = (bp) => {
+    dispatch(createBlueprint(bp)).then(() => {
+      dispatch(fetchByAuthor(bp.author))
+    })
+  }
+
   return (
     <div className="grid" style={{ gridTemplateColumns: '1.1fr 1.4fr', gap: 24 }}>
       <section className="grid" style={{ gap: 16 }}>
+        <div className="card">
+          <BlueprintForm onSubmit={handleCreate} />
+        </div>
         <div className="card">
           <h2 style={{ marginTop: 0 }}>Blueprints</h2>
           <div style={{ display: 'flex', gap: 12 }}>

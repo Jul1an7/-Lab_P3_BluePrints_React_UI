@@ -184,3 +184,19 @@ VITE_USE_MOCK=true
 - **Dark mode** y diseño responsive.
 
 > Este proyecto es un punto de partida para que tus estudiantes evolucionen el cliente clásico de Blueprints a una SPA moderna con prácticas de la industria.
+
+---
+
+### Evidencias de la realización, ejecución y funcionamiento del backend + frontend
+
+Inicio de sesión con las credenciales creadas en el Blueprints P2 (JWT).
+
+![img.png](docs/images/JWTOK.png)
+
+Consulta de blueprints por autor. Student fue el autor ingresado, de forma que el recurso no existe, se da el resultado en la siguiente imagen.
+
+![img.png](docs/images/GET{author}.png)
+
+Funcionamiento y ejecución correcta de las pruebas.
+
+![img.png](docs/images/img.png)
