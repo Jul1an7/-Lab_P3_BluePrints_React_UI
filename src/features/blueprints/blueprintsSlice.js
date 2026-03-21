@@ -1,32 +1,38 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import api from '../../services/apiClient.js'
+import service from '../../services/blueprintService.js'
 
-export const fetchAuthors = createAsyncThunk('blueprints/fetchAuthors', async () => {
-  const { data } = await api.get('/blueprints')
-  // Expecting API returns array of {author, name, points}
-  const authors = [...new Set(data.map((bp) => bp.author))]
-  return authors
-})
+export const fetchAuthors = createAsyncThunk(
+  'blueprints/fetchAuthors',
+  async () => {
+    const data = await service.getAll()
+    const authors = [...new Set(data.map((bp) => bp.author))]
+    return authors
+  }
+)
 
-export const fetchByAuthor = createAsyncThunk('blueprints/fetchByAuthor', async (author) => {
-  const { data } = await api.get(`/blueprints/${encodeURIComponent(author)}`)
-  return { author, items: data }
-})
+export const fetchByAuthor = createAsyncThunk(
+  'blueprints/fetchByAuthor',
+  async (author) => {
+    const data = await service.getByAuthor(author)
+    return { author, items: data }
+  }
+)
 
 export const fetchBlueprint = createAsyncThunk(
   'blueprints/fetchBlueprint',
   async ({ author, name }) => {
-    const { data } = await api.get(
-      `/blueprints/${encodeURIComponent(author)}/${encodeURIComponent(name)}`,
-    )
+    const data = await service.getByAuthorAndName(author, name)
     return data
-  },
+  }
 )
 
-export const createBlueprint = createAsyncThunk('blueprints/createBlueprint', async (payload) => {
-  const { data } = await api.post('/blueprints', payload)
-  return data
-})
+export const createBlueprint = createAsyncThunk(
+  'blueprints/createBlueprint',
+  async (payload) => {
+    const data = await service.create(payload)
+    return data
+  }
+)
 
 const slice = createSlice({
   name: 'blueprints',
@@ -37,7 +43,11 @@ const slice = createSlice({
     status: 'idle',
     error: null,
   },
-  reducers: {},
+  reducers: {
+    setCurrentBlueprint: (state, action) => {
+      state.current = action.payload
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchAuthors.pending, (s) => {
@@ -65,3 +75,4 @@ const slice = createSlice({
 })
 
 export default slice.reducer
+export const { setCurrentBlueprint } = slice.actions
