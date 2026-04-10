@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import api from '../services/apiClient.js'
+import { clearStoredToken, getValidToken } from '../services/authToken.js'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
+  const hasSession = Boolean(getValidToken())
 
   const submit = async (e) => {
     e.preventDefault()
@@ -16,6 +18,11 @@ export default function LoginPage() {
     } catch (e) {
       setError('Credenciales inválidas o servidor no disponible')
     }
+  }
+
+  const handleLogout = () => {
+    clearStoredToken()
+    alert('Sesion cerrada')
   }
 
   return (
@@ -40,6 +47,16 @@ export default function LoginPage() {
       <button className="btn primary" style={{ marginTop: 12 }}>
         Ingresar
       </button>
+      {hasSession && (
+        <button
+          type="button"
+          className="btn"
+          style={{ marginTop: 12, marginLeft: 8 }}
+          onClick={handleLogout}
+        >
+          Cerrar sesion
+        </button>
+      )}
     </form>
   )
 }
