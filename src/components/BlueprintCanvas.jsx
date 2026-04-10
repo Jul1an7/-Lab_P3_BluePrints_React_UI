@@ -1,17 +1,17 @@
 import { useEffect, useRef } from 'react'
 
-export default function BlueprintCanvas({ points = [], width = 520, height = 360 }) {
+export default function BlueprintCanvas({ points = [], width = 520, height = 360, onPointAdd }) {
   const ref = useRef(null)
+  const pointsRef = useRef(Array.isArray(points) ? points : [])
 
-  useEffect(() => {
-    const canvas = ref.current
-    if (!canvas) return
+  const drawCanvas = (canvas, renderPoints) => {
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.fillStyle = '#0b1220'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.strokeStyle = 'rgba(148,163,184,0.15)'
     ctx.lineWidth = 1
+
     for (let x = 0; x < canvas.width; x += 40) {
       ctx.beginPath()
       ctx.moveTo(x, 0)
@@ -24,29 +24,55 @@ export default function BlueprintCanvas({ points = [], width = 520, height = 360
       ctx.lineTo(canvas.width, y)
       ctx.stroke()
     }
-    if (points.length > 1) {
+
+    if (renderPoints.length > 1) {
       ctx.strokeStyle = '#93c5fd'
       ctx.lineWidth = 2
       ctx.beginPath()
-      ctx.moveTo(points[0].x, points[0].y)
-      for (let i = 1; i < points.length; i++) {
-        const p = points[i]
+      ctx.moveTo(renderPoints[0].x, renderPoints[0].y)
+      for (let i = 1; i < renderPoints.length; i++) {
+        const p = renderPoints[i]
         ctx.lineTo(p.x, p.y)
       }
       ctx.stroke()
     }
-    ctx.fillStyle = '#fbbf24'
-    for (const p of points) {
+
+    ctx.fillStyle = '#f59e0b'
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth = 1.5
+    for (const p of renderPoints) {
       ctx.beginPath()
-      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2)
+      ctx.arc(p.x, p.y, 6, 0, Math.PI * 2)
       ctx.fill()
+      ctx.stroke()
     }
+  }
+
+  useEffect(() => {
+    const canvas = ref.current
+    if (!canvas) return
+    pointsRef.current = Array.isArray(points) ? points : []
+    drawCanvas(canvas, pointsRef.current)
   }, [points])
+
+  const handleClick = (event) => {
+    if (!onPointAdd || !ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    const scaleX = ref.current.width / rect.width
+    const scaleY = ref.current.height / rect.height
+    const x = Math.round((event.clientX - rect.left) * scaleX)
+    const y = Math.round((event.clientY - rect.top) * scaleY)
+
+    pointsRef.current = [...pointsRef.current, { x, y }]
+    drawCanvas(ref.current, pointsRef.current)
+    onPointAdd({ x, y })
+  }
 
   return (
     <canvas
       id="blueprint-canvas"
       ref={ref}
+      onClick={handleClick}
       width={width}
       height={height}
       style={{
@@ -55,6 +81,7 @@ export default function BlueprintCanvas({ points = [], width = 520, height = 360
         borderRadius: 12,
         width: '100%',
         maxWidth: width,
+        cursor: onPointAdd ? 'crosshair' : 'default',
       }}
     />
   )

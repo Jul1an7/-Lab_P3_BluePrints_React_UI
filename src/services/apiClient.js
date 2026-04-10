@@ -1,7 +1,14 @@
 import axios from 'axios'
 
+function normalizeBaseUrl(raw) {
+  const input = (raw || 'http://localhost:8080').trim()
+  const noTrailingSlash = input.replace(/\/+$/, '')
+  // Evita duplicar prefijo cuando los servicios ya usan rutas que empiezan por /api/...
+  return noTrailingSlash.replace(/\/api$/i, '')
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
+  baseURL: normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL),
   timeout: 8000,
 })
 

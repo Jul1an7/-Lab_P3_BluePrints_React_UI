@@ -37,12 +37,30 @@ a {
   border-radius: 10px;
   border: 1px solid #334155;
   background: #1f2937;
+  color: #e2e8f0;
   cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease, opacity 0.12s ease;
+}
+.btn:hover {
+  filter: brightness(1.08);
+}
+.btn:active {
+  transform: translateY(1px);
 }
 .btn.primary {
   background: #2563eb;
   border-color: #1d4ed8;
   color: white;
+}
+.btn.danger {
+  background: #dc2626;
+  border-color: #b91c1c;
+  color: white;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: none;
 }
 .grid {
   display: grid;
