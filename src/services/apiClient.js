@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { getValidToken } from './authToken.js'
 
 function normalizeBaseUrl(raw) {
   const input = (raw || 'http://localhost:8080').trim()
@@ -14,7 +13,7 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const token = getValidToken()
+  const token = localStorage.getItem('token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }

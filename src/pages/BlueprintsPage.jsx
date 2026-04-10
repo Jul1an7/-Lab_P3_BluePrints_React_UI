@@ -11,7 +11,6 @@ import {
 import BlueprintCanvas from '../components/BlueprintCanvas.jsx'
 import BlueprintForm from '../components/BlueprintForm.jsx'
 import { createStompClient } from '../services/stompClient.js'
-import { getValidToken } from '../services/authToken.js'
 
 export default function BlueprintsPage() {
   const dispatch = useDispatch()
@@ -31,21 +30,11 @@ export default function BlueprintsPage() {
   const currentAuthor = (activeBlueprint?.author || current?.author || '').trim()
   const currentName = (activeBlueprint?.name || current?.name || current?.bpname || '').trim()
   const hasCurrentBlueprint = Boolean(currentAuthor && currentName)
-  const isAuthenticated = Boolean(getValidToken())
-  const canDraw = isAuthenticated && hasCurrentBlueprint
-  const canMutateBlueprint = isAuthenticated && hasCurrentBlueprint
 
   useEffect(() => {
-    const token = getValidToken()
+    const token = localStorage.getItem('token')
     if (!token) {
       setAuthHint('Inicia sesión para consultar y modificar blueprints.')
-      setSelectedAuthor('')
-      setAuthorInput('')
-      setDraftPoints([])
-      setActiveBlueprint(null)
-      setRtMode('none')
-      setRtStatus('disconnected')
-      setRtError('')
       return
     }
 
@@ -64,20 +53,12 @@ export default function BlueprintsPage() {
   )
 
   const getBlueprints = () => {
-    if (!isAuthenticated) {
-      setActionMessage('Inicia sesión para consultar blueprints.')
-      return
-    }
     if (!authorInput) return
     setSelectedAuthor(authorInput)
     dispatch(fetchByAuthor(authorInput))
   }
 
   const openBlueprint = (bp) => {
-    if (!isAuthenticated) {
-      setActionMessage('Inicia sesión para abrir blueprints.')
-      return
-    }
     dispatch(fetchBlueprint({ author: bp.author, name: bp.name }))
       .unwrap()
       .then((blueprint) => {
@@ -90,10 +71,6 @@ export default function BlueprintsPage() {
   }
 
   const handleCreate = (bp) => {
-    if (!isAuthenticated) {
-      setActionMessage('Inicia sesión para crear blueprints.')
-      return
-    }
     setDraftPoints(Array.isArray(bp.points) ? bp.points : [])
     setActiveBlueprint({ author: bp.author, name: bp.name })
 
@@ -111,10 +88,6 @@ export default function BlueprintsPage() {
 
   const handleSave = async () => {
     if (!hasCurrentBlueprint) return
-    if (!isAuthenticated) {
-      setActionMessage('Inicia sesión para guardar cambios.')
-      return
-    }
     setActionMessage('')
     try {
       await dispatch(
@@ -130,10 +103,6 @@ export default function BlueprintsPage() {
 
   const handleDelete = () => {
     if (!hasCurrentBlueprint) return
-    if (!isAuthenticated) {
-      setActionMessage('Inicia sesión para eliminar blueprints.')
-      return
-    }
     setActionMessage('')
     dispatch(deleteBlueprint({ author: currentAuthor, name: currentName }))
       .unwrap()
@@ -149,23 +118,12 @@ export default function BlueprintsPage() {
   }
 
   const onCanvasPoint = (point) => {
-    if (!hasCurrentBlueprint) {
-      setActionMessage('Abre un blueprint antes de dibujar.')
-      return
-    }
+    if (!hasCurrentBlueprint) return
 
-    if (!isAuthenticated) {
-      setActionMessage('Inicia sesión para dibujar y usar tiempo real.')
-      return
-    }
-
-    // Siempre pintamos local para no bloquear UX mientras llega el broadcast.
     setDraftPoints((previous) => [...previous, point])
 
     if (rtMode === 'stomp' && stompRef.current?.isConnected()) {
       stompRef.current.sendPoint({ author: currentAuthor, name: currentName, point })
-    } else if (rtMode === 'stomp') {
-      setRtError('STOMP no está conectado. El punto se dibujó localmente.')
     }
   }
 
@@ -179,28 +137,12 @@ export default function BlueprintsPage() {
       return
     }
 
-    if (!isAuthenticated) {
-      setRtStatus('disconnected')
-      setRtError('Inicia sesión para habilitar STOMP.')
-      return
-    }
-
     setRtError('')
     const stomp = createStompClient({
       onStatus: setRtStatus,
       onError: (msg) => setRtError(String(msg || 'STOMP error')),
       onPoint: (points) => {
-        setDraftPoints((previous) => {
-          const incoming = Array.isArray(points) ? points : []
-          if (!incoming.length) return previous
-          const next = [...previous]
-          for (const p of incoming) {
-            const last = next[next.length - 1]
-            if (last?.x === p?.x && last?.y === p?.y) continue
-            next.push(p)
-          }
-          return next
-        })
+        setDraftPoints((previous) => [...previous, ...points])
       },
     })
     stompRef.current = stomp
@@ -210,7 +152,7 @@ export default function BlueprintsPage() {
       stomp.disconnect()
       stompRef.current = null
     }
-  }, [dispatch, rtMode, isAuthenticated])
+  }, [dispatch, rtMode])
 
   useEffect(() => {
     if (rtMode !== 'stomp' || !stompRef.current || !hasCurrentBlueprint) return
@@ -307,11 +249,7 @@ export default function BlueprintsPage() {
                         {bp.totalPoints ?? bp.points?.length ?? 0}
                       </td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #1f2937', textAlign: 'center' }}>
-                        <button
-                          className="btn primary"
-                          onClick={() => openBlueprint(bp)}
-                          disabled={!isAuthenticated}
-                        >
+                        <button className="btn primary" onClick={() => openBlueprint(bp)}>
                           Abrir
                         </button>
                       </td>
@@ -334,10 +272,10 @@ export default function BlueprintsPage() {
           </p>
         )}
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-          <button className="btn primary" onClick={handleSave} disabled={!canMutateBlueprint}>
+          <button className="btn primary" onClick={handleSave} disabled={!hasCurrentBlueprint}>
             Save/Update
           </button>
-          <button className="btn danger" onClick={handleDelete} disabled={!canMutateBlueprint}>
+          <button className="btn danger" onClick={handleDelete} disabled={!hasCurrentBlueprint}>
             Delete
           </button>
         </div>
@@ -347,10 +285,7 @@ export default function BlueprintsPage() {
             {actionMessage}
           </p>
         )}
-        <BlueprintCanvas
-          points={Array.isArray(draftPoints) ? draftPoints : []}
-          onPointAdd={canDraw ? onCanvasPoint : undefined}
-        />
+        <BlueprintCanvas points={Array.isArray(draftPoints) ? draftPoints : []} onPointAdd={onCanvasPoint} />
         <p style={{ marginTop: 8, color: '#94a3b8' }}>
           Haz clic sobre el canvas para agregar puntos. Con 1 punto verás un punto; desde el 2do se dibuja la línea.
         </p>

@@ -1,5 +1,4 @@
 import { Client } from '@stomp/stompjs'
-import { getValidToken } from './authToken.js'
 
 function getBrokerUrl() {
   const base = import.meta.env.VITE_STOMP_BASE || 'http://localhost:8080'
@@ -22,7 +21,7 @@ export function createStompClient(handlers = {}) {
     brokerURL: getBrokerUrl(),
     reconnectDelay: 1500,
     connectHeaders: {
-      Authorization: getValidToken() ? `Bearer ${getValidToken()}` : '',
+      Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '',
     },
     onConnect: () => {
       console.log('STOMP onConnect fired')
@@ -58,7 +57,7 @@ export function createStompClient(handlers = {}) {
   return {
     connect() {
       try {
-        const token = getValidToken()
+        const token = localStorage.getItem('token')
         if (!token) {
           console.error('STOMP: No JWT token found in localStorage')
           onError?.('No JWT token. Please login first.')
@@ -117,7 +116,7 @@ export function createStompClient(handlers = {}) {
       client.publish({
         destination: '/app/draw',
         headers: {
-          Authorization: getValidToken() ? `Bearer ${getValidToken()}` : '',
+          Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '',
         },
         body: JSON.stringify({ author, name, point }),
       })

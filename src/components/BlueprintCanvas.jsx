@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 
 export default function BlueprintCanvas({ points = [], width = 520, height = 360, onPointAdd }) {
   const ref = useRef(null)
+  const pointsRef = useRef(Array.isArray(points) ? points : [])
 
   const drawCanvas = (canvas, renderPoints) => {
     const ctx = canvas.getContext('2d')
@@ -50,7 +51,8 @@ export default function BlueprintCanvas({ points = [], width = 520, height = 360
   useEffect(() => {
     const canvas = ref.current
     if (!canvas) return
-    drawCanvas(canvas, Array.isArray(points) ? points : [])
+    pointsRef.current = Array.isArray(points) ? points : []
+    drawCanvas(canvas, pointsRef.current)
   }, [points])
 
   const handleClick = (event) => {
@@ -61,6 +63,8 @@ export default function BlueprintCanvas({ points = [], width = 520, height = 360
     const x = Math.round((event.clientX - rect.left) * scaleX)
     const y = Math.round((event.clientY - rect.top) * scaleY)
 
+    pointsRef.current = [...pointsRef.current, { x, y }]
+    drawCanvas(ref.current, pointsRef.current)
     onPointAdd({ x, y })
   }
 
